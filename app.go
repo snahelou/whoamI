@@ -33,6 +33,9 @@ var key string
 var port string
 var name string
 
+var Version string
+var Build string
+
 func init() {
 	flag.StringVar(&cert, "cert", "", "give me a certificate")
 	flag.StringVar(&key, "key", "", "give me a key")
@@ -54,6 +57,7 @@ func main() {
 	http.HandleFunc("/", whoamiHandler)
 	http.HandleFunc("/api", apiHandler)
 	http.HandleFunc("/health", healthHandler)
+	http.HandleFunc("/version", versionHandler)
 
 	fmt.Println("Starting up on port " + port)
 
@@ -61,6 +65,19 @@ func main() {
 		log.Fatal(http.ListenAndServeTLS(":"+port, cert, key, nil))
 	}
 	log.Fatal(http.ListenAndServe(":"+port, nil))
+}
+
+func versionHandler(w http.ResponseWriter, req *http.Request) {
+	w.Header().Set("Connection", "keep-alive")
+	w.Header().Set("Content-Type", "text/plain")
+	_, _ = fmt.Fprintln(w, "Version:", Version)
+	_, _ = fmt.Fprintln(w, "Build Time:", Build)
+
+	if err := req.Write(w); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 }
 
 func benchHandler(w http.ResponseWriter, _ *http.Request) {
